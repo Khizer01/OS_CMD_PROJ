@@ -1,0 +1,76 @@
+﻿using System;
+using OS_CMD_PROJECT.Commands;
+using OS_CMD_PROJECT.Services;
+
+namespace OS_CMD_PROJECT
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            // Initialize the command registry (stores all available commands)
+            var registry = new CommandRegistry();
+
+            // Initialize the AI client (used for interacting with Gemini API)
+            var aiClient = new AiClient();
+
+            // Register commands
+            registry.Register(new HelpCommand(registry)); // Command to list all available commands
+            registry.Register(new ListTasksCommand()); // Command to list running tasks (processes)
+            registry.Register(new AskAiCommand(aiClient)); // Command to interact with the AI
+            // Future commands to be added:
+            // registry.Register(new PwdCommand()); // Command to display the current working directory
+            // registry.Register(new LsCommand()); // Command to list all files and folders in the current directory
+
+            // Display a welcome message
+            Console.WriteLine("Welcome to OS_CMD_PROJECT CLI\nType 'help' to see available commands. Type 'exit' to quit.");
+
+            while (true)
+            {
+                Console.Write("$ "); // Display the command prompt
+                var input = Console.ReadLine(); // Read user input
+
+                if (string.IsNullOrWhiteSpace(input))
+                    continue; // Skip empty input
+
+                input = input.Trim();
+
+                // Exit the program if the user types 'exit'
+                if (input.Equals("exit", StringComparison.OrdinalIgnoreCase))
+                    break;
+
+                // Split the input into command and arguments
+                var parts = input.Split(' ');
+                var commandName = parts[0]; // First word is the command name
+
+                // Collect arguments manually for compatibility
+                string[] commandArgs = new string[parts.Length - 1];
+                for (int i = 1; i < parts.Length; i++)
+                {
+                    commandArgs[i - 1] = parts[i];
+                }
+
+                // Find the command in the registry
+                var command = registry.Get(commandName);
+
+                if (command == null)
+                {
+                    Console.WriteLine("Unknown command. Type 'help' to see available commands.");
+                    continue;
+                }
+
+                // Execute the command
+                try
+                {
+                    command.Execute(commandArgs).GetAwaiter().GetResult();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                }
+            }
+
+            Console.WriteLine("Goodbye!");
+        }
+    }
+}
