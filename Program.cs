@@ -17,7 +17,15 @@ namespace OS_CMD_PROJECT
             // Register commands
             registry.Register(new HelpCommand(registry)); // Command to list all available commands
             registry.Register(new ListTasksCommand()); // Command to list running tasks (processes)
-            registry.Register(new AskAiCommand(aiClient)); // Command to interact with the AI
+            registry.Register(new AskAiCommand(aiClient));
+            registry.Register(new CreateFileCommand());// Command to create file
+            registry.Register(new DeleteFileCommand());// Command to delete file
+            registry.Register(new DeleteDreectoryCommand());// Command to delete directory
+            registry.Register(new DisplayFileContents());
+            registry.Register(new Date());
+
+
+            // Command to interact with the AI
             // Future commands to be added:
             // registry.Register(new PwdCommand()); // Command to display the current working directory
             // registry.Register(new LsCommand()); // Command to list all files and folders in the current directory
