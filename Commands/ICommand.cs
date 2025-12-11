@@ -1,11 +1,15 @@
+using System;
+using System.IO;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace OS_CMD_PROJECT.Commands
 {
     // Interface for all commands
     // Every command must implement this interface
     public interface ICommand
-    {
+    {   
+        
         // The name of the command (e.g., "help")
         string Name { get; }
 
@@ -161,26 +165,5 @@ namespace OS_CMD_PROJECT.Commands
         }
 
     }
-            string date = DateTime.Now.ToString("F");
-
-            using (var fs = File.Create(date))
-            {
-                await fs.FlushAsync(); // ensure async creation
-            }
-
-            Console.WriteLine(date);
-        }
-
-    }
-            string date = DateTime.Now.ToString("F");
-
-            using (var fs = File.Create(date))
-            {
-                await fs.FlushAsync(); // ensure async creation
-            }
-
-            Console.WriteLine(date);
-        }
-
-    }
+            
 }
