@@ -38,7 +38,7 @@ namespace OS_CMD_PROJECT.Commands
             string filePath=args[0];
             if (!File.Exists(filePath))
             {
-                File.Create(filePath);
+                File.Create(filePath).Close();
 
                 using (var fs = File.Create(filePath))
                 {
@@ -79,12 +79,7 @@ namespace OS_CMD_PROJECT.Commands
             else
             {
                 File.Delete(filePath);
-
-                using (var fs = File.Create(filePath))
-                {
-                    await fs.FlushAsync(); // ensure async creation
-                }
-
+                await Task.Run(() => File.Delete(filePath));
                 Console.WriteLine($"Deleted File: {filePath}");
             }
 
@@ -115,12 +110,7 @@ namespace OS_CMD_PROJECT.Commands
             else
             {
                 Directory.Delete(dirPath, false);
-
-                using (var fs = File.Create(dirPath))
-                {
-                    await fs.FlushAsync(); // ensure async creation
-                }
-
+                await Task.Run(() => File.Delete(dirPath));
                 Console.WriteLine($"Deleted Directory: {dirPath}");
             }
 
@@ -129,7 +119,7 @@ namespace OS_CMD_PROJECT.Commands
 
     public class DisplayFileContents : ICommand
     {
-        public string Name => "display-file";
+        public string Name => "cat";
 
         public string Description => "Dispalys File Content! ";
 
@@ -137,7 +127,7 @@ namespace OS_CMD_PROJECT.Commands
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: Dispaly-File <file-name>");
+                Console.WriteLine("Usage: cat <file-name>");
                 return;
 
             }
@@ -152,8 +142,10 @@ namespace OS_CMD_PROJECT.Commands
             else
             {
                 string fileContent = await Task.Run(() => File.ReadAllText(filePath));
-                Console.WriteLine("File Content:");
+                Console.WriteLine("----------- File Content ---------------");
                 Console.WriteLine(fileContent);
+                Console.WriteLine("----------- END ---------------");
+
             }
         }
     }
@@ -165,15 +157,13 @@ namespace OS_CMD_PROJECT.Commands
 
         public async Task Execute(string[] args)
         {
-            string date = DateTime.Now.ToString("F");
-
-            using (var fs = File.Create(date))
+            await Task.Run(() =>
             {
-                await fs.FlushAsync(); // ensure async creation
-            }
-
-            Console.WriteLine(date);
+                string date = DateTime.Now.ToString("F");
+                Console.WriteLine(date);
+            });
         }
 
     }
+            
 }
