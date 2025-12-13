@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -86,7 +87,7 @@ namespace OS_CMD_PROJECT.Commands
         }
     }
 
-    public class DeleteDreectoryCommand : ICommand
+    public class DeleteDirectoryCommand : ICommand
     {
         public string Name => "delete-dir";
         public string Description => "Deletes a Directory";
@@ -129,7 +130,6 @@ namespace OS_CMD_PROJECT.Commands
             {
                 Console.WriteLine("Usage: cat <file-name>");
                 return;
-
             }
 
             string filePath = args[0];
@@ -163,7 +163,111 @@ namespace OS_CMD_PROJECT.Commands
                 Console.WriteLine(date);
             });
         }
-
     }
-            
+
+    public class CreateDirectory : ICommand {
+        public string Name => "make-dir";
+
+        public string Description => "Create a new directory ";
+
+        public async Task Execute(string[] args) {
+            await Task.Run(() => {
+                if (args.Length == 0) {
+                    Console.WriteLine("Usage: make-dir <directory-name>");
+                    return;
+                }
+
+                string dirName = args[0];
+                if(Directory.Exists(dirName)) {
+                    Console.WriteLine($"{dirName} already exists");
+                    return;
+                }
+
+                Directory.CreateDirectory(dirName);
+                Console.WriteLine($"Directory Created: {dirName} sucessfully");
+            });
+        }
+    }
+
+    public class List : ICommand {
+        public string Name => "ls";
+
+        public string Description => "Displays list of elements in the current directory ";
+
+        public async Task Execute(string[] args) {
+            await Task.Run(() => {
+                string directory = Directory.GetCurrentDirectory();
+                string[] dirItems = Directory.GetFileSystemEntries(directory);
+                foreach(var item in dirItems) {
+                    Console.WriteLine(item);
+                }
+            });
+        }
+    }
+
+    public class PresentWorkingDirectory : ICommand {
+        public string Name => "pwd";
+
+        public string Description => "Displays current directory";
+
+        public async Task Execute(string[] args) {
+            await Task.Run(() => {
+                string directory = Directory.GetCurrentDirectory();
+                Console.WriteLine(directory);
+            });
+        }
+    }
+    public class ChangeDirectory : ICommand {
+        public string Name => "cd";
+
+        public string Description => "Change Directory";
+
+        public async Task Execute(string[] args) {
+            if (args.Length == 0) {
+                Console.WriteLine("Usage: cd <directory>");
+                return;
+            }
+
+            string targetPath = args[0];
+
+            try {
+                if (!Directory.Exists(targetPath)) {
+                    Console.WriteLine("Directory does not exist.");
+                    return;
+                }
+
+                await Task.Run(() => {
+                    Directory.SetCurrentDirectory(targetPath);
+                    Console.WriteLine("Current Directory:");
+                    Console.WriteLine(Directory.GetCurrentDirectory());
+                });
+            }
+            catch (Exception ex) {
+                Console.WriteLine("Error changing directory: " + ex.Message);
+            }
+        }
+    }
+
+    public class EditFile : ICommand {
+        public string Name => "edit-file";
+
+        public string Description => "Edit file content";
+
+        public async Task Execute(string[] args) {
+            if (args.Length == 0) {
+                Console.WriteLine("Usage: edit-file <filename>");
+                return;
+            }
+
+            string targetPath = args[0];
+            if (!File.Exists(targetPath)) {
+                Console.WriteLine("File does not exist!");
+                return;
+            }
+
+            await Task.Run(() => {
+                Process.Start("notepad.exe", targetPath);
+            });
+        }
+    }
 }
