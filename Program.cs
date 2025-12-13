@@ -24,16 +24,19 @@ namespace OS_CMD_PROJECT
             registry.Register(new DisplayFileContents()); // Command to display file contents
             registry.Register(new Date()); // Command to display date
 
-            // Future commands to be added:
-            // registry.Register(new PwdCommand()); // Command to display the current working directory
-            // registry.Register(new LsCommand()); // Command to list all files and folders in the current directory
 
+            registry.Register(new List()); //List current dir items
+            registry.Register(new PresentWorkingDirectory()); // Command to display the current working directory
+            registry.Register(new ChangeDirectory()); // Command to display the current working directory
+            registry.Register(new CreateDirectory()); // Command to create directory
+            registry.Register(new EditFile()); // Command edit file content
+            
             // Display a welcome message
-            Console.WriteLine("Welcome to OS_CMD_PROJECT CLI\nType 'help' to see available commands. Type 'exit' to quit.");
+            Console.WriteLine("Welcome to OS CLI\nType 'help' to see available commands. Type 'exit' to quit.");
 
             while (true)
             {
-                Console.Write("$ "); // Display the command prompt
+                Console.Write(">> "); // Display the command prompt
                 var input = Console.ReadLine(); // Read user input
 
                 if (string.IsNullOrWhiteSpace(input))
