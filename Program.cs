@@ -29,8 +29,12 @@ namespace OS_CMD_PROJECT
             registry.Register(new PresentWorkingDirectory()); // Command to display the current working directory
             registry.Register(new ChangeDirectory()); // Command to display the current working directory
             registry.Register(new CreateDirectory()); // Command to create directory
-            registry.Register(new EditFile()); // Command edit file content
-            
+            registry.Register(new EditFile()); // Command to edit file content
+
+            registry.Register(new RenameCommand()); // Command to Rename file or Directory
+            registry.Register(new ClearCommand()); // Command to Clear terminal screen
+            registry.Register(new WhoAmICommand()); // Command to Display current username 
+
             // Display a welcome message
             Console.WriteLine("Welcome to OS CLI\nType 'help' to see available commands. Type 'exit' to quit.");
 

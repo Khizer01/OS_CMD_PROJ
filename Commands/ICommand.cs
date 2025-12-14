@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -270,4 +270,64 @@ namespace OS_CMD_PROJECT.Commands
             });
         }
     }
+
+    public class RenameCommand : ICommand
+    {
+        public string Name => "rename";
+
+        public string Description => "Renames a file or directory. Usage: rename <old_name> <new_name>";
+
+        public async Task Execute(string[] args)
+        {
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Usage: rename <old_name> <new_name>");
+                return;
+            }
+
+            string oldPath = args[0];
+            string newPath = args[1];
+
+            if (File.Exists(oldPath))
+            {
+                await Task.Run(() => File.Move(oldPath, newPath));
+                Console.WriteLine($"File renamed: {oldPath} --> {newPath}");
+            }
+            else if (Directory.Exists(oldPath))
+            {
+                await Task.Run(() => Directory.Move(oldPath, newPath));
+                Console.WriteLine($"Directory renamed: {oldPath} --> {newPath}");
+            }
+            else
+            {
+                Console.WriteLine("File or directory does not exist.");
+            }
+        }
+    }
+
+    public class ClearCommand : ICommand
+    {
+        public string Name => "clear";
+
+        public string Description => "Clears the terminal screen.";
+
+        public Task Execute(string[] args)
+        {
+            Console.Clear();
+            return Task.CompletedTask;
+        }
+    }
+
+    public class WhoAmICommand : ICommand
+    {
+        public string Name => "whoami";
+        public string Description => "Displays the current user name.";
+
+        public Task Execute(string[] args)
+        {
+            Console.WriteLine(Environment.UserName);
+            return Task.CompletedTask;
+        }
+    }
 }
+
