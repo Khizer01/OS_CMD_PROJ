@@ -17,6 +17,9 @@ jobs:
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1
     
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+    
       - name: Restore NuGet packages
         run: nuget restore OS_CMD_PROJECT.sln
     
