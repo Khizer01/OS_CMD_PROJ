@@ -30,6 +30,7 @@ namespace OS_CMD_PROJECT
             registry.Register(new ChangeDirectory()); // Command to display the current working directory
             registry.Register(new CreateDirectory()); // Command to create directory
             registry.Register(new EditFile()); // Command to edit file content
+            registry.Register(new OpenVs()); // Command to open vs-code
 
             registry.Register(new RenameCommand()); // Command to Rename file or Directory
             registry.Register(new ClearCommand()); // Command to Clear terminal screen

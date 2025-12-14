@@ -329,5 +329,17 @@ namespace OS_CMD_PROJECT.Commands
             return Task.CompletedTask;
         }
     }
+
+    public class OpenVs : ICommand {
+        public string Name => "code.";
+
+        public string Description => "Open Visual Studio Code";
+
+        public async Task Execute(string[] args) {
+            await Task.Run(() => {
+                Process.Start("code");
+            });
+        }
+    }
 }
 
