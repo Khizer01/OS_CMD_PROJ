@@ -36,6 +36,13 @@ namespace OS_CMD_PROJECT
             registry.Register(new ClearCommand()); // Command to Clear terminal screen
             registry.Register(new WhoAmICommand()); // Command to Display current username 
 
+            registry.Register(new FileCopyCommand());       // Command to copy a single file (supports same or different directory)
+            registry.Register(new DirectoryCopyCommand());  // Command to copy a complete directory recursively
+            registry.Register(new InfoCommand());                // Command to display information about a file or directory
+            registry.Register(new TimeCommand());                // Command to display current system time
+            registry.Register(new EchoCommand());                // Command to print text to the console
+           
+
             // Display a welcome message
             Console.WriteLine("Welcome to OS CLI\nType 'help' to see available commands. Type 'exit' to quit.");
 

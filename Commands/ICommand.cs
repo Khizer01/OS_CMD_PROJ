@@ -341,5 +341,176 @@ namespace OS_CMD_PROJECT.Commands
             });
         }
     }
+    public class FileCopyCommand : ICommand
+    {
+        public string Name => "copyfile";
+        public string Description => "Copy a single file (same or different directory)";
+
+        public async Task Execute(string[] args)
+        {
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Usage: copyfile <source-file> <destination-file-or-directory>");
+                return;
+            }
+
+            string src = args[0];
+            string dst = args[1];
+
+            await Task.Run(() =>
+            {
+                if (!File.Exists(src))
+                {
+                    Console.WriteLine("Source file does not exist.");
+                    return;
+                }
+
+                // If destination is a directory, keep the same filename
+                if (Directory.Exists(dst))
+                {
+                    dst = Path.Combine(dst, Path.GetFileName(src));
+                }
+                else
+                {
+                    // Ensure destination directory exists
+                    string dstDir = Path.GetDirectoryName(dst);
+                    if (!Directory.Exists(dstDir))
+                    {
+                        Directory.CreateDirectory(dstDir);
+                    }
+                }
+
+                // Prevent copying onto itself
+                if (Path.GetFullPath(src).Equals(Path.GetFullPath(dst), StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("Source and destination are the same file. Copy skipped.");
+                    return;
+                }
+
+                File.Copy(src, dst, true);
+                Console.WriteLine($"File copied successfully from {src} to {dst}");
+            });
+        }
+    }
+
+    public class DirectoryCopyCommand : ICommand
+    {
+        public string Name => "copydir";
+        public string Description => "Copy a directory recursively";
+
+        public async Task Execute(string[] args)
+        {
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Usage: copydir <source-directory> <destination-directory>");
+                return;
+            }
+
+            string srcDir = args[0];
+            string dstDir = args[1];
+
+            await Task.Run(() =>
+            {
+                if (!Directory.Exists(srcDir))
+                {
+                    Console.WriteLine("Source directory does not exist.");
+                    return;
+                }
+
+                CopyDirectoryRecursive(srcDir, dstDir);
+                Console.WriteLine($"Directory copied successfully from {srcDir} to {dstDir}");
+            });
+        }
+
+        private void CopyDirectoryRecursive(string srcDir, string dstDir)
+        {
+            // Append source folder name to destination if it doesn't exist
+            string dstFolder = Path.Combine(dstDir, Path.GetFileName(srcDir.TrimEnd(Path.DirectorySeparatorChar)));
+            if (!Directory.Exists(dstFolder))
+            {
+                Directory.CreateDirectory(dstFolder);
+            }
+
+            // Copy all files
+            foreach (var file in Directory.GetFiles(srcDir))
+            {
+                string dstFile = Path.Combine(dstFolder, Path.GetFileName(file));
+                File.Copy(file, dstFile, true);
+            }
+
+            // Copy all subdirectories recursively
+            foreach (var dir in Directory.GetDirectories(srcDir))
+            {
+                CopyDirectoryRecursive(dir, dstFolder);
+            }
+        }
+    }
+
+
+
+    public class InfoCommand : ICommand
+    {
+        public string Name => "info";
+        public string Description => "Show information about file or directory";
+
+        public async Task Execute(string[] args)
+        {
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Usage: info <path>");
+                return;
+            }
+
+            string path = args[0];
+
+            await Task.Run(() =>
+            {
+                if (File.Exists(path))
+                {
+                    FileInfo f = new FileInfo(path);
+                    Console.WriteLine($"File: {f.Name}");
+                    Console.WriteLine($"Size: {f.Length} bytes");
+                    Console.WriteLine($"Created: {f.CreationTime}");
+                }
+                else if (Directory.Exists(path))
+                {
+                    DirectoryInfo d = new DirectoryInfo(path);
+                    Console.WriteLine($"Directory: {d.Name}");
+                    Console.WriteLine($"Created: {d.CreationTime}");
+                }
+                else
+                {
+                    Console.WriteLine("Path does not exist.");
+                }
+            });
+        }
+    }
+
+    public class TimeCommand : ICommand
+    {
+        public string Name => "time";
+        public string Description => "Show current system time";
+
+        public Task Execute(string[] args)
+        {
+            Console.WriteLine(DateTime.Now.ToLongTimeString());
+            return Task.CompletedTask;
+        }
+    }
+
+    public class EchoCommand : ICommand
+    {
+        public string Name => "echo";
+        public string Description => "Print text to console";
+
+        public Task Execute(string[] args)
+        {
+            Console.WriteLine(string.Join(" ", args));
+            return Task.CompletedTask;
+        }
+    }
+
+   
 }
+
 
