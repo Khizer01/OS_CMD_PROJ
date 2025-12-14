@@ -8,19 +8,21 @@ on:
 jobs:
   build:
     name: Build Console App
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build project
-        run: dotnet build --no-restore --configuration Release
+    
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1
+    
+      - name: Restore NuGet packages
+        run: nuget restore OS_CMD_PROJECT.sln
+    
+      - name: Build solution
+        run: msbuild OS_CMD_PROJECT.sln /p:Configuration=Release
+    
+      - name: Post-build
+        if: always()
+        run: echo "Build finished"
