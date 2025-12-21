@@ -1,28 +1,62 @@
 using System;
+using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OS_CMD_PROJECT.Commands
 {
-    // Command to list all currently running tasks (processes) on the operating system
-    // This command will display details such as Process ID (PID) and Process Name
     public class ListTasksCommand : ICommand
     {
-        public string Name => "listTasks"; // Command name
-        public string Description => "List all running tasks (processes) with their details."; // Command description
+        public string Name => "listTasks";
+        public string Description => "Terminal task manager (Press Q or ESC to exit)";
 
         public Task Execute(string[] args)
         {
-            // Placeholder implementation
-            // Future implementation: Use System.Diagnostics.Process to get all running processes
-            // Example:
-            // foreach (var process in Process.GetProcesses())
-            // {
-            //     Console.WriteLine($"PID: {process.Id}, Name: {process.ProcessName}");
-            // }
+            Console.Clear();
+            Console.CursorVisible = false;
 
-            Console.WriteLine("This command will list all running tasks (processes) in the future.");
-            Console.WriteLine("Details such as Process ID (PID) and Process Name will be displayed.");
+            while (true)
+            {   if (Console.KeyAvailable)
+                {
+                    var key = Console.ReadKey(true);
+                    if (key.Key == ConsoleKey.Q || key.Key == ConsoleKey.Escape)
+                        break;
+                }
 
+                Console.SetCursorPosition(0, 0);
+
+                Console.WriteLine(" ID     Process Name               Memory (MB)");
+                Console.WriteLine("-----------------------------------------------");
+
+                var processes = Process.GetProcesses();
+
+                foreach (var process in processes)
+                {
+                    try
+                    {
+                        string name = process.ProcessName;
+
+                        if (name.Length > 25)
+                            name = name.Substring(0, 22) + "...";
+
+                        double memoryMb = process.WorkingSet64 / (1024.0 * 1024.0);
+
+                        Console.WriteLine(
+                            $"{process.Id,-6} {name,-25} {memoryMb,10:F2}"
+                        );
+                    }
+                    catch
+                    {
+                        // Ignore inaccessible system processes
+                    }
+                }
+
+                Console.WriteLine("\nPress Q or ESC to exit...");
+                Thread.Sleep(3000);
+            }
+
+            Console.CursorVisible = true;
+            Console.Clear();
             return Task.CompletedTask;
         }
     }
