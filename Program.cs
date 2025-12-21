@@ -38,12 +38,12 @@ namespace OS_CMD_PROJECT
             registry.Register(new GetCpuUsageCommand());// Command to dispaly CPU usage 
             registry.Register(new KillProcessCommand());//Command to kill process using PID
 
-            registry.Register(new FileCopyCommand());       // Command to copy a single file (supports same or different directory)
-            registry.Register(new DirectoryCopyCommand());  // Command to copy a complete directory recursively
-            registry.Register(new InfoCommand());                // Command to display information about a file or directory
-            registry.Register(new TimeCommand());                // Command to display current system time
-            registry.Register(new EchoCommand());                // Command to print text to the console
-           
+            registry.Register(new FileCopyCommand());// Command to copy a single file (supports same or different directory)
+            registry.Register(new DirectoryCopyCommand());// Command to copy a complete directory recursively
+            registry.Register(new taskinfoCommand());// Command to display information about a file or directory
+            registry.Register(new TimeCommand());// Command to display current system time
+            registry.Register(new EchoCommand());// Command to print text to the console
+            registry.Register(new TaskMonitorCommand()); // Command to monitor a file continuously
 
             // Display a welcome message
             Console.WriteLine("Welcome to OS CLI\nType 'help' to see available commands. Type 'exit' to quit.");
