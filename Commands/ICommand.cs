@@ -1,7 +1,7 @@
 
 ﻿using System;
 using System.Diagnostics;
-
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -452,16 +452,16 @@ namespace OS_CMD_PROJECT.Commands
 
 
 
-    public class InfoCommand : ICommand
+    public class taskinfoCommand : ICommand
     {
-        public string Name => "info";
+        public string Name => "TASK-INFORMATION";
         public string Description => "Show information about file or directory";
 
         public async Task Execute(string[] args)
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: info <path>");
+                Console.WriteLine("Usage: task-info <file or directory name>");
                 return;
             }
 
@@ -514,7 +514,120 @@ namespace OS_CMD_PROJECT.Commands
         }
     }
 
-   
+  
+    public class TaskMonitorCommand : ICommand
+    {
+        public string Name => "task-monitor";
+        public string Description => "Continuously monitor a file and show live info, including creation, modifications, size, history of changes, and memory usage";
+        private int modificationCount = 0;
+        private DateTime? firstChangeTime = null;
+        private readonly List<DateTime> lastChanges = new List<DateTime>();
+        private DateTime lastEventTime = DateTime.MinValue;
+        private readonly int maxHistory = 5; // last 5 modifications
+
+        public async Task Execute(string[] args)
+        {
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Usage: task-monitor <file name>");
+                return;
+            }
+
+            string path = args[0];
+
+            if (!File.Exists(path))
+            {
+                Console.WriteLine("File does not exist.");
+                return;
+            }
+
+            FileSystemWatcher watcher = new FileSystemWatcher
+            {
+                Path = Path.GetDirectoryName(path),
+                Filter = Path.GetFileName(path),
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size
+            };
+
+            watcher.Changed += (sender, e) =>
+            {
+                // Debounce rapid events
+                if ((DateTime.Now - lastEventTime).TotalMilliseconds < 500) return;
+                lastEventTime = DateTime.Now;
+
+                modificationCount++;
+                DateTime now = DateTime.Now;
+
+                if (firstChangeTime == null)
+                    firstChangeTime = now;
+
+                lastChanges.Add(now);
+
+                // Keep only last N changes
+                if (lastChanges.Count > maxHistory)
+                    lastChanges.RemoveAt(0);
+            };
+
+            watcher.EnableRaisingEvents = true;
+
+            Console.WriteLine("Monitoring file. Press 'q' to stop.\n");
+
+            try
+            {
+                while (true)
+                {
+                    if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Q)
+                        break;
+
+                    try
+                    {
+                        FileInfo currentFile = new FileInfo(path);
+                        Process currentProcess = Process.GetCurrentProcess();
+
+                        Console.Clear();
+                        Console.WriteLine("===== File Monitor Dashboard =====");
+                        Console.WriteLine($"File: {currentFile.Name}");
+                        Console.WriteLine($"Full Path: {currentFile.FullName}");
+                        Console.WriteLine($"Created: {currentFile.CreationTime}");
+                        Console.WriteLine($"Last Modified: {currentFile.LastWriteTime}");
+                        Console.WriteLine($"Size: {currentFile.Length} bytes");
+                        Console.WriteLine($"ReadOnly: {currentFile.IsReadOnly}, Hidden: {currentFile.Attributes.HasFlag(FileAttributes.Hidden)}");
+                        Console.WriteLine($"Total Modifications Detected: {modificationCount}");
+                        if (firstChangeTime != null)
+                            Console.WriteLine($"First Change Detected At: {firstChangeTime}");
+                        Console.WriteLine("Last Changes:");
+                        if (lastChanges.Count == 0)
+                            Console.WriteLine("  No changes yet");
+                        else
+                        {
+                            foreach (var dt in lastChanges)
+                                Console.WriteLine($"  {dt}");
+                        }
+                        Console.WriteLine($"Current Process RAM Usage: {currentProcess.WorkingSet64 / 1024.0 / 1024.0:F2} MB");
+                        Console.WriteLine("Press 'q' to stop monitoring.");
+                    }
+                    catch (FileNotFoundException)
+                    {
+                        Console.Clear();
+                        Console.WriteLine("File has been deleted. Monitoring stopped.");
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Error accessing file: " + ex.Message);
+                    }
+
+                    await Task.Delay(1000); // Refresh every second
+                }
+            }
+            finally
+            {
+                watcher.Dispose();
+            }
+        }
     }
+
+
+
+}
 
 
