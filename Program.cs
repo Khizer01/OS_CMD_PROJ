@@ -12,7 +12,7 @@ namespace OS_CMD_PROJECT
             var registry = new CommandRegistry();
 
             // Initialize the AI client (used for interacting with Gemini API)
-            var aiClient = new AiClient();
+            var aiClient = new GeminiClient();
 
             // Register commands
             registry.Register(new HelpCommand(registry)); // Command to list all available commands
