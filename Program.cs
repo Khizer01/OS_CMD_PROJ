@@ -34,6 +34,8 @@ namespace OS_CMD_PROJECT
             registry.Register(new RenameCommand()); // Command to Rename file or Directory
             registry.Register(new ClearCommand()); // Command to Clear terminal screen
             registry.Register(new WhoAmICommand()); // Command to Display current username 
+            registry.Register(new GetCpuUsageCommand());// Command to dispaly CPU usage 
+            registry.Register(new KillProcessCommand());//Command to kill process using PID
 
             // Display a welcome message
             Console.WriteLine("Welcome to OS CLI\nType 'help' to see available commands. Type 'exit' to quit.");

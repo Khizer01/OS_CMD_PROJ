@@ -18,6 +18,7 @@ namespace OS_CMD_PROJECT.Commands
         public string Name => "ask-ai"; // Command name
         public string Description => "Ask the AI a question. Usage: ask-ai <your question>"; // Command description
 
+
         public async Task Execute(string[] args)
         {
             // Ensure the user provides a question
@@ -37,3 +38,6 @@ namespace OS_CMD_PROJECT.Commands
         }
     }
 }
+
+
+
