@@ -1,0 +1,31 @@
+name: .NET CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Console App
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+    
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1
+    
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+    
+      - name: Restore NuGet packages
+        run: nuget restore OS_CMD_PROJECT.sln
+    
+      - name: Build solution
+        run: msbuild OS_CMD_PROJECT.sln /p:Configuration=Release
+    
+      - name: Post-build
+        if: always()
+        run: echo "Build finished"
