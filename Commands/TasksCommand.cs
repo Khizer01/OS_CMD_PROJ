@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace OS_CMD_PROJECT.Commands
 {
-    public class ListTasksCommand : ICommand
+    public class TasksCommand : ICommand
     {
         public string Name => "listTasks";
         public string Description => "Terminal task manager (Press Q or ESC to exit)";

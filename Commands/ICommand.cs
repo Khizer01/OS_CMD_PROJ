@@ -1,5 +1,7 @@
+
 ﻿using System;
 using System.Diagnostics;
+
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -21,7 +23,7 @@ namespace OS_CMD_PROJECT.Commands
         // Example: If the user types "help", this method will run
         Task Execute(string[] args);
     }
-    
+
     public class CreateFileCommand : ICommand
     {
         public string Name => "create-file";
@@ -36,7 +38,7 @@ namespace OS_CMD_PROJECT.Commands
                 return;
             }
 
-            string filePath=args[0];
+            string filePath = args[0];
             if (!File.Exists(filePath))
             {
                 File.Create(filePath).Close();
@@ -150,7 +152,8 @@ namespace OS_CMD_PROJECT.Commands
         }
     }
 
-    public class Date : ICommand {
+    public class Date : ICommand
+    {
         public string Name => "date";
 
         public string Description => "Displays Curent date and time! ";
@@ -330,12 +333,14 @@ namespace OS_CMD_PROJECT.Commands
         }
     }
 
-    public class OpenVs : ICommand {
+    public class OpenVs : ICommand
+    {
         public string Name => "code.";
 
         public string Description => "Open Visual Studio Code";
 
-        public async Task Execute(string[] args) {
+        public async Task Execute(string[] args)
+        {
             await Task.Run(() => {
                 Process.Start("code");
             });
@@ -392,7 +397,6 @@ namespace OS_CMD_PROJECT.Commands
             });
         }
     }
-
     public class DirectoryCopyCommand : ICommand
     {
         public string Name => "copydir";
@@ -511,6 +515,6 @@ namespace OS_CMD_PROJECT.Commands
     }
 
    
-}
+    }
 
 
