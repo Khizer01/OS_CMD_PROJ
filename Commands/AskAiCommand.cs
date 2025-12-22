@@ -32,10 +32,31 @@ namespace OS_CMD_PROJECT.Commands
             var prompt = string.Join(" ", args);
             Console.WriteLine("Sending to AI...");
 
+            
             // Get the AI's response
             var response = await _aiClient.QueryAsync(prompt);
             Console.WriteLine("AI response:\n" + response);
         }
+    }
+}
+
+
+
+public class AIClient : IAIClient
+{
+    private readonly string _apiKey;
+    public AIClient()
+    {
+        _apiKey = Environment.GetEnvironmentVariable("AI_API_KEY");
+
+        if (string.IsNullOrWhiteSpace(_apiKey))
+            throw new Exception("AI API Key not found.");
+    }
+
+    public async Task<string> QueryAsync(string prompt)
+    {
+        // Use _apiKey here in HTTP request
+        return $"You asked: {prompt}";
     }
 }
 
