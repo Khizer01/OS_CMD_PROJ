@@ -24,7 +24,7 @@ namespace OS_CMD_PROJECT.Services
         public async Task<string> QueryAsync(string prompt)
         {
             var url =
-                $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={_apiKey}";
+                $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={_apiKey}";
 
             var requestBody = new
             {
