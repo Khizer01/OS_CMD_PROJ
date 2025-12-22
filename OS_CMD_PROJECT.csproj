@@ -54,7 +54,7 @@
     <Compile Include="Commands\CommandRegistry.cs" />
     <Compile Include="Commands\HelpCommand.cs" />
     <Compile Include="Commands\ICommand.cs" />
-    <Compile Include="Commands\ListTasksCommand.cs" />
+    <Compile Include="Commands\TaskCommands.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\GeminiAiClient.cs" />
