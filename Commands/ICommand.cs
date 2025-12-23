@@ -449,19 +449,16 @@ namespace OS_CMD_PROJECT.Commands
             }
         }
     }
-
-
-
-    public class taskinfoCommand : ICommand
+    public class TaskInfoCommand : ICommand
     {
-        public string Name => "TASK-INFORMATION";
-        public string Description => "Show information about file or directory";
+        public string Name => "task-info";
+        public string Description => "Show information about a file or directory";
 
         public async Task Execute(string[] args)
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: task-info <file or directory name>");
+                Console.WriteLine("Usage: task-info <file or directory path>");
                 return;
             }
 
@@ -469,50 +466,71 @@ namespace OS_CMD_PROJECT.Commands
 
             await Task.Run(() =>
             {
-                if (File.Exists(path))
+                try
                 {
-                    FileInfo f = new FileInfo(path);
-                    Console.WriteLine($"File: {f.Name}");
-                    Console.WriteLine($"Size: {f.Length} bytes");
-                    Console.WriteLine($"Created: {f.CreationTime}");
+                    if (File.Exists(path))
+                    {
+                        FileInfo f = new FileInfo(path);
+                        Console.WriteLine($"File: {f.Name}");
+                        Console.WriteLine($"Full Path: {f.FullName}");
+                        Console.WriteLine($"Size: {f.Length} bytes");
+                        Console.WriteLine($"Created: {f.CreationTime}");
+                        Console.WriteLine($"Last Modified: {f.LastWriteTime}");
+                        Console.WriteLine($"ReadOnly: {f.IsReadOnly}");
+                        Console.WriteLine($"Hidden: {f.Attributes.HasFlag(FileAttributes.Hidden)}");
+                    }
+                    else if (Directory.Exists(path))
+                    {
+                        DirectoryInfo d = new DirectoryInfo(path);
+                        Console.WriteLine($"Directory: {d.Name}");
+                        Console.WriteLine($"Full Path: {d.FullName}");
+                        Console.WriteLine($"Created: {d.CreationTime}");
+                        Console.WriteLine($"Files: {d.GetFiles().Length}");
+                        Console.WriteLine($"Subdirectories: {d.GetDirectories().Length}");
+                        Console.WriteLine($"Hidden: {d.Attributes.HasFlag(FileAttributes.Hidden)}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Path does not exist.");
+                    }
                 }
-                else if (Directory.Exists(path))
+                catch (Exception ex)
                 {
-                    DirectoryInfo d = new DirectoryInfo(path);
-                    Console.WriteLine($"Directory: {d.Name}");
-                    Console.WriteLine($"Created: {d.CreationTime}");
-                }
-                else
-                {
-                    Console.WriteLine("Path does not exist.");
+                    Console.WriteLine($"Error accessing path: {ex.Message}");
                 }
             });
         }
-    }
-
+    }   
     public class TimeCommand : ICommand
     {
-        public string Name => "time";
-        public string Description => "Show current system time";
+    public string Name => "time";
+    public string Description => "Show current system time";
 
-        public Task Execute(string[] args)
-        {
-            Console.WriteLine(DateTime.Now.ToLongTimeString());
-            return Task.CompletedTask;
-        }
+    public Task Execute(string[] args)
+    {
+        Console.WriteLine(DateTime.Now.ToLongTimeString());
+        return Task.CompletedTask;
+    }
     }
 
     public class EchoCommand : ICommand
     {
-        public string Name => "echo";
-        public string Description => "Print text to console";
+       public string Name => "echo";
+      public string Description => "Print text to console";
 
-        public Task Execute(string[] args)
+       public Task Execute(string[] args)
         {
-            Console.WriteLine(string.Join(" ", args));
-            return Task.CompletedTask;
+        Console.WriteLine(string.Join(" ", args));
+        return Task.CompletedTask;
         }
     }
+ 
 }
+
+
+
+
+   
+
 
 
