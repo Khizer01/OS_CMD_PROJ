@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
@@ -449,68 +450,222 @@ namespace OS_CMD_PROJECT.Commands
             }
         }
     }
-    public class TaskInfoCommand : ICommand
+    public class FileInfoCommand : ICommand
     {
-        public string Name => "task-info";
-        public string Description => "Show information about a file or directory";
+        public string Name => "file-info";
+        public string Description => "Show detailed information about a file";
 
         public async Task Execute(string[] args)
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: task-info <file or directory path>");
+                Console.WriteLine("Usage: file-info <file name/path>");
                 return;
             }
 
-            string path = args[0];
+            string input = args[0];
+            string path = Path.IsPathRooted(input)
+                ? input
+                : Path.Combine(Directory.GetCurrentDirectory(), input);
 
             await Task.Run(() =>
             {
                 try
                 {
-                    if (File.Exists(path))
+                    if (!File.Exists(path))
                     {
-                        FileInfo f = new FileInfo(path);
-                        Console.WriteLine($"File: {f.Name}");
-                        Console.WriteLine($"Full Path: {f.FullName}");
-                        Console.WriteLine($"Size: {f.Length} bytes");
-                        Console.WriteLine($"Created: {f.CreationTime}");
-                        Console.WriteLine($"Last Modified: {f.LastWriteTime}");
-                        Console.WriteLine($"ReadOnly: {f.IsReadOnly}");
-                        Console.WriteLine($"Hidden: {f.Attributes.HasFlag(FileAttributes.Hidden)}");
+                        Console.WriteLine("File does not exist.");
+                        return;
                     }
-                    else if (Directory.Exists(path))
-                    {
-                        DirectoryInfo d = new DirectoryInfo(path);
-                        Console.WriteLine($"Directory: {d.Name}");
-                        Console.WriteLine($"Full Path: {d.FullName}");
-                        Console.WriteLine($"Created: {d.CreationTime}");
-                        Console.WriteLine($"Files: {d.GetFiles().Length}");
-                        Console.WriteLine($"Subdirectories: {d.GetDirectories().Length}");
-                        Console.WriteLine($"Hidden: {d.Attributes.HasFlag(FileAttributes.Hidden)}");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Path does not exist.");
-                    }
+
+                    FileInfo f = new FileInfo(path);
+
+                    double sizeKB = f.Length / 1024.0;
+                    double sizeMB = sizeKB / 1024.0;
+
+                    Console.WriteLine("========== FILE INFORMATION ==========");
+                    Console.WriteLine($"Name            : {f.Name}");
+                    Console.WriteLine($"Full Path       : {f.FullName}");
+                    Console.WriteLine($"Size            : {f.Length} bytes");
+                    Console.WriteLine($"Size (KB)       : {sizeKB:F2} KB");
+                    Console.WriteLine($"Size (MB)       : {sizeMB:F2} MB");
+                    Console.WriteLine($"Created         : {f.CreationTime}");
+                    Console.WriteLine($"Last Modified   : {f.LastWriteTime}");
+                    Console.WriteLine($"Last Accessed   : {f.LastAccessTime}");
+                    Console.WriteLine($"Readable        : {CanRead(f.FullName)}");
+                    Console.WriteLine($"Writable        : {!f.IsReadOnly}");
+                    Console.WriteLine($"Hidden          : {f.Attributes.HasFlag(FileAttributes.Hidden)}");
+                    Console.WriteLine($"System File     : {f.Attributes.HasFlag(FileAttributes.System)}");
+                    Console.WriteLine($"Read Only       : {f.IsReadOnly}");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error accessing path: {ex.Message}");
+                    Console.WriteLine($"Error accessing file: {ex.Message}");
                 }
             });
         }
-    }   
-    public class TimeCommand : ICommand
-    {
-    public string Name => "time";
-    public string Description => "Show current system time";
 
-    public Task Execute(string[] args)
+        private bool CanRead(string path)
+        {
+            try
+            {
+                using (File.Open(path, FileMode.Open, FileAccess.Read)) { }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
+
+    public class DirectoryInfoCommand : ICommand
     {
+        public string Name => "dir-info";
+        public string Description => "Show detailed information about a directory";
+
+        public async Task Execute(string[] args)
+        {
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Usage: dir-info <directory name/path>");
+                return;
+            }
+
+            string input = args[0];
+            string path = Path.IsPathRooted(input)
+                ? input
+                : Path.Combine(Directory.GetCurrentDirectory(), input);
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    if (!Directory.Exists(path))
+                    {
+                        Console.WriteLine("Directory does not exist.");
+                        return;
+                    }
+
+                    DirectoryInfo d = new DirectoryInfo(path);
+
+                    Console.WriteLine("======= DIRECTORY INFORMATION =======");
+                    Console.WriteLine($"Name            : {d.Name}");
+                    Console.WriteLine($"Full Path       : {d.FullName}");
+                    Console.WriteLine($"Created         : {d.CreationTime}");
+                    Console.WriteLine($"Last Modified   : {d.LastWriteTime}");
+                    Console.WriteLine($"Last Accessed   : {d.LastAccessTime}");
+                    Console.WriteLine($"Files Count     : {d.GetFiles().Length}");
+                    Console.WriteLine($"Subdirectories  : {d.GetDirectories().Length}");
+                    Console.WriteLine($"Hidden          : {d.Attributes.HasFlag(FileAttributes.Hidden)}");
+                    Console.WriteLine($"System Folder   : {d.Attributes.HasFlag(FileAttributes.System)}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error accessing directory: {ex.Message}");
+                }
+            });
+        }
+    }
+   
+    public class MonitorProcessCommand : ICommand
+    {
+            public string Name => "monitor";
+            public string Description => "Monitor RAM usage of a process by PID or name";
+
+            public async Task Execute(string[] args)
+            {
+                if (args.Length == 0)
+                {
+                    Console.WriteLine("Usage: monitor <process-name | pid>");
+                    return;
+                }
+
+                await Task.Run(() =>
+                {
+                    Process process = null;
+
+                    try
+                    {
+                        // 1️⃣ Check if input is PID
+                        int pid;
+                        if (int.TryParse(args[0], out pid))
+                        {
+                            process = Process.GetProcessById(pid);
+                        }
+                        else
+                        {
+                            // 2️⃣ Search by process name (NO LINQ)
+                            Process[] processes = Process.GetProcessesByName(args[0]);
+                            if (processes.Length == 0)
+                            {
+                                Console.WriteLine("Process not found.");
+                                return;
+                            }
+                            process = processes[0];
+                        }
+
+                        Console.WriteLine("========== PROCESS MONITOR ==========");
+                        Console.WriteLine($"Process Name   : {process.ProcessName}");
+                        Console.WriteLine($"Process ID     : {process.Id}");
+
+                        long startRam = process.WorkingSet64;
+                        Console.WriteLine($"RAM at Start   : {FormatMemory(startRam)}");
+
+                        Console.WriteLine("\nMonitoring RAM usage...\n");
+
+                        // 3️⃣ Monitor until process exits
+                        while (!process.HasExited)
+                        {
+                            process.Refresh();
+                            Console.WriteLine(
+                                $"[{DateTime.Now:HH:mm:ss}] RAM Used : {FormatMemory(process.WorkingSet64)}"
+                            );
+                            Thread.Sleep(1000);
+                        }
+
+                        Console.WriteLine("\nProcess finished.");
+
+                        try
+                        {
+                            long endRam = process.WorkingSet64;
+                            Console.WriteLine($"RAM at End     : {FormatMemory(endRam)}");
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Unable to read RAM after exit.");
+                        }
+
+                        Console.WriteLine("=====================================");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error monitoring process: {ex.Message}");
+                    }
+                });
+            }
+
+            private string FormatMemory(long bytes)
+            {
+                double kb = bytes / 1024.0;
+                double mb = kb / 1024.0;
+                return $"{mb:F2} MB";
+            }
+     
+    }
+    
+
+
+    public class TimeCommand : ICommand
+     {
+      public string Name => "time";
+      public string Description => "Show current system time";
+
+      public Task Execute(string[] args)
+       {
         Console.WriteLine(DateTime.Now.ToLongTimeString());
         return Task.CompletedTask;
-    }
+       }
     }
 
     public class EchoCommand : ICommand
