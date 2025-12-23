@@ -568,10 +568,11 @@ namespace OS_CMD_PROJECT.Commands
         }
     }
    
+   
     public class MonitorProcessCommand : ICommand
     {
             public string Name => "monitor";
-            public string Description => "Monitor RAM usage of a process by PID or name";
+            public string Description => "Monitor RAM usage of a process by PID or name (press 'q' to stop)";
 
             public async Task Execute(string[] args)
             {
@@ -587,7 +588,6 @@ namespace OS_CMD_PROJECT.Commands
 
                     try
                     {
-                        // 1️⃣ Check if input is PID
                         int pid;
                         if (int.TryParse(args[0], out pid))
                         {
@@ -595,7 +595,6 @@ namespace OS_CMD_PROJECT.Commands
                         }
                         else
                         {
-                            // 2️⃣ Search by process name (NO LINQ)
                             Process[] processes = Process.GetProcessesByName(args[0]);
                             if (processes.Length == 0)
                             {
@@ -612,10 +611,27 @@ namespace OS_CMD_PROJECT.Commands
                         long startRam = process.WorkingSet64;
                         Console.WriteLine($"RAM at Start   : {FormatMemory(startRam)}");
 
-                        Console.WriteLine("\nMonitoring RAM usage...\n");
+                        Console.WriteLine("\nMonitoring RAM usage... (press 'q' to stop)\n");
 
-                        // 3️⃣ Monitor until process exits
-                        while (!process.HasExited)
+                        // 1️⃣ Start a thread to detect 'q' key press
+                        bool stopMonitoring = false;
+                        Thread keyListener = new Thread(() =>
+                        {
+                            while (true)
+                            {
+                                var key = Console.ReadKey(true);
+                                if (key.Key == ConsoleKey.Q)
+                                {
+                                    stopMonitoring = true;
+                                    break;
+                                }
+                            }
+                        });
+                        keyListener.IsBackground = true;
+                        keyListener.Start();
+
+                        // 2️⃣ Monitor RAM until process exits or user presses 'q'
+                        while (!process.HasExited && !stopMonitoring)
                         {
                             process.Refresh();
                             Console.WriteLine(
@@ -624,11 +640,11 @@ namespace OS_CMD_PROJECT.Commands
                             Thread.Sleep(1000);
                         }
 
-                        Console.WriteLine("\nProcess finished.");
+                        Console.WriteLine("\nMonitoring stopped.");
 
                         try
                         {
-                            long endRam = process.WorkingSet64;
+                            long endRam = process.HasExited ? 0 : process.WorkingSet64;
                             Console.WriteLine($"RAM at End     : {FormatMemory(endRam)}");
                         }
                         catch
@@ -651,9 +667,10 @@ namespace OS_CMD_PROJECT.Commands
                 double mb = kb / 1024.0;
                 return $"{mb:F2} MB";
             }
-     
     }
     
+
+
 
 
     public class TimeCommand : ICommand
