@@ -42,7 +42,10 @@ namespace OS_CMD_PROJECT
             registry.Register(new DirectoryCopyCommand());// Command to copy a complete directory recursively
             registry.Register(new TimeCommand());// Command to display current system time
             registry.Register(new EchoCommand());// Command to print text to the console
-            registry.Register(new TaskInfoCommand());             // Command to show information about a file or directory
+            registry.Register(new FileInfoCommand()); // Command to show detailed file information
+            registry.Register(new DirectoryInfoCommand()); // Command to show detailed directory information
+            registry.Register(new MonitorProcessCommand());
+
 
             // Display a welcome message
             Console.WriteLine("Welcome to OS CLI\nType 'help' to see available commands. Type 'exit' to quit.");
