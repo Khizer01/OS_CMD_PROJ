@@ -44,7 +44,9 @@ namespace OS_CMD_PROJECT
             registry.Register(new EchoCommand());// Command to print text to the console
             registry.Register(new FileInfoCommand()); // Command to show detailed file information
             registry.Register(new DirectoryInfoCommand()); // Command to show detailed directory information
-            registry.Register(new MonitorProcessCommand());
+            registry.Register(new MonitorProcessCommand());//command to monitor process memory continously
+
+
 
 
             // Display a welcome message

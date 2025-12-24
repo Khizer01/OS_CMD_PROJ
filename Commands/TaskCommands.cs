@@ -128,115 +128,110 @@ namespace OS_CMD_PROJECT.Commands
         }
     }
 
-
-    public class TaskMonitorCommand : ICommand
+    public class MonitorProcessCommand : ICommand
     {
-        public string Name => "task-monitor";
-        public string Description => "Continuously monitor a file and show live info, including creation, modifications, size, history of changes, and memory usage";
-        private int modificationCount = 0;
-        private DateTime? firstChangeTime = null;
-        private readonly List<DateTime> lastChanges = new List<DateTime>();
-        private DateTime lastEventTime = DateTime.MinValue;
-        private readonly int maxHistory = 5; // last 5 modifications
+        public string Name => "monitor";
+        public string Description => "Continuously monitor process CPU and RAM usage (press 'q' to stop)";
 
         public async Task Execute(string[] args)
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: task-monitor <file name>");
+                Console.WriteLine("Usage: monitor <process-name | pid>");
                 return;
             }
 
-            string path = args[0];
-
-            if (!File.Exists(path))
+            await Task.Run(() =>
             {
-                Console.WriteLine("File does not exist.");
-                return;
-            }
+                Process process = null;
 
-            FileSystemWatcher watcher = new FileSystemWatcher
-            {
-                Path = Path.GetDirectoryName(path),
-                Filter = Path.GetFileName(path),
-                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size
-            };
-
-            watcher.Changed += (sender, e) =>
-            {
-                // Debounce rapid events
-                if ((DateTime.Now - lastEventTime).TotalMilliseconds < 500) return;
-                lastEventTime = DateTime.Now;
-
-                modificationCount++;
-                DateTime now = DateTime.Now;
-
-                if (firstChangeTime == null)
-                    firstChangeTime = now;
-
-                lastChanges.Add(now);
-
-                // Keep only last N changes
-                if (lastChanges.Count > maxHistory)
-                    lastChanges.RemoveAt(0);
-            };
-
-            watcher.EnableRaisingEvents = true;
-
-            Console.WriteLine("Monitoring file. Press 'q' to stop.\n");
-
-            try
-            {
-                while (true)
+                try
                 {
-                    if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Q)
-                        break;
-
-                    try
+                    int pid;
+                    if (int.TryParse(args[0], out pid))
                     {
-                        FileInfo currentFile = new FileInfo(path);
-                        Process currentProcess = Process.GetCurrentProcess();
-
-                        Console.Clear();
-                        Console.WriteLine("===== File Monitor Dashboard =====");
-                        Console.WriteLine($"File: {currentFile.Name}");
-                        Console.WriteLine($"Full Path: {currentFile.FullName}");
-                        Console.WriteLine($"Created: {currentFile.CreationTime}");
-                        Console.WriteLine($"Last Modified: {currentFile.LastWriteTime}");
-                        Console.WriteLine($"Size: {currentFile.Length} bytes");
-                        Console.WriteLine($"ReadOnly: {currentFile.IsReadOnly}, Hidden: {currentFile.Attributes.HasFlag(FileAttributes.Hidden)}");
-                        Console.WriteLine($"Total Modifications Detected: {modificationCount}");
-                        if (firstChangeTime != null)
-                            Console.WriteLine($"First Change Detected At: {firstChangeTime}");
-                        Console.WriteLine("Last Changes:");
-                        if (lastChanges.Count == 0)
-                            Console.WriteLine("  No changes yet");
-                        else
+                        process = Process.GetProcessById(pid);
+                    }
+                    else
+                    {
+                        Process[] processes = Process.GetProcessesByName(args[0]);
+                        if (processes.Length == 0)
                         {
-                            foreach (var dt in lastChanges)
-                                Console.WriteLine($"  {dt}");
+                            Console.WriteLine("Process not found.");
+                            return;
                         }
-                        Console.WriteLine($"Current Process RAM Usage: {currentProcess.WorkingSet64 / 1024.0 / 1024.0:F2} MB");
-                        Console.WriteLine("Press 'q' to stop monitoring.");
-                    }
-                    catch (FileNotFoundException)
-                    {
-                        Console.Clear();
-                        Console.WriteLine("File has been deleted. Monitoring stopped.");
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Error accessing file: " + ex.Message);
+                        process = processes[0];
                     }
 
-                    await Task.Delay(1000); // Refresh every second
+                    Console.WriteLine("========== PROCESS MONITOR ==========");
+                    Console.WriteLine($"Process Name   : {process.ProcessName}");
+                    Console.WriteLine($"Process ID     : {process.Id}");
+
+                    long startRam = process.WorkingSet64;
+                    TimeSpan startCpu = process.TotalProcessorTime;
+
+                    Console.WriteLine($"RAM at Start   : {FormatMemory(startRam)}");
+                    Console.WriteLine($"CPU at Start   : {startCpu.TotalMilliseconds:F0} ms");
+
+                    Console.WriteLine("\nMonitoring CPU & RAM... (press 'q' to stop)\n");
+
+                    bool stoppedByUser = false;
+
+                    Thread keyListener = new Thread(() =>
+                    {
+                        while (true)
+                        {
+                            if (Console.ReadKey(true).Key == ConsoleKey.Q)
+                            {
+                                stoppedByUser = true;
+                                break;
+                            }
+                        }
+                    });
+                    keyListener.IsBackground = true;
+                    keyListener.Start();
+
+                    while (!process.HasExited && !stoppedByUser)
+                    {
+                        process.Refresh();
+                        Console.WriteLine(
+                            $"[{DateTime.Now:HH:mm:ss}] CPU: {process.TotalProcessorTime.TotalMilliseconds:F0} ms | RAM: {FormatMemory(process.WorkingSet64)}"
+                        );
+                        Thread.Sleep(1000);
+                    }
+
+                    Console.WriteLine();
+
+                    process.Refresh();
+
+                    if (stoppedByUser)
+                    {
+                        Console.WriteLine("Monitoring stopped by user.");
+                        Console.WriteLine($"CPU used so far : {process.TotalProcessorTime.TotalMilliseconds:F0} ms");
+                        Console.WriteLine($"RAM at stop    : {FormatMemory(process.WorkingSet64)}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Process exited normally.");
+                        Console.WriteLine($"Total CPU used : {process.TotalProcessorTime.TotalMilliseconds:F0} ms");
+                        Console.WriteLine("RAM at exit    : 0.00 MB");
+                    }
+
+                    Console.WriteLine("=====================================");
                 }
-            }
-            finally
-            {
-                watcher.Dispose();
-            }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error monitoring process: {ex.Message}");
+                }
+            });
+        }
+
+        private string FormatMemory(long bytes)
+        {
+            double kb = bytes / 1024.0;
+            double mb = kb / 1024.0;
+            return $"{mb:F2} MB";
         }
     }
+
 }
