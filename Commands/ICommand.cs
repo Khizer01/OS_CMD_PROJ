@@ -349,14 +349,14 @@ namespace OS_CMD_PROJECT.Commands
     }
     public class FileCopyCommand : ICommand
     {
-        public string Name => "copyfile";
+        public string Name => "copy-file";
         public string Description => "Copy a single file (same or different directory)";
 
         public async Task Execute(string[] args)
         {
             if (args.Length < 2)
             {
-                Console.WriteLine("Usage: copyfile <source-file> <destination-file-or-directory>");
+                Console.WriteLine("Usage: copy-file <source-file> <destination-file-or-directory>");
                 return;
             }
 
@@ -400,14 +400,14 @@ namespace OS_CMD_PROJECT.Commands
     }
     public class DirectoryCopyCommand : ICommand
     {
-        public string Name => "copydir";
+        public string Name => "copy-dir";
         public string Description => "Copy a directory recursively";
 
         public async Task Execute(string[] args)
         {
             if (args.Length < 2)
             {
-                Console.WriteLine("Usage: copydir <source-directory> <destination-directory>");
+                Console.WriteLine("Usage: copy-dir <source-directory> <destination-directory>");
                 return;
             }
 
@@ -567,97 +567,9 @@ namespace OS_CMD_PROJECT.Commands
             });
         }
     }
-   
-    public class MonitorProcessCommand : ICommand
-    {
-            public string Name => "monitor";
-            public string Description => "Monitor RAM usage of a process by PID or name";
-
-            public async Task Execute(string[] args)
-            {
-                if (args.Length == 0)
-                {
-                    Console.WriteLine("Usage: monitor <process-name | pid>");
-                    return;
-                }
-
-                await Task.Run(() =>
-                {
-                    Process process = null;
-
-                    try
-                    {
-                        // 1️⃣ Check if input is PID
-                        int pid;
-                        if (int.TryParse(args[0], out pid))
-                        {
-                            process = Process.GetProcessById(pid);
-                        }
-                        else
-                        {
-                            // 2️⃣ Search by process name (NO LINQ)
-                            Process[] processes = Process.GetProcessesByName(args[0]);
-                            if (processes.Length == 0)
-                            {
-                                Console.WriteLine("Process not found.");
-                                return;
-                            }
-                            process = processes[0];
-                        }
-
-                        Console.WriteLine("========== PROCESS MONITOR ==========");
-                        Console.WriteLine($"Process Name   : {process.ProcessName}");
-                        Console.WriteLine($"Process ID     : {process.Id}");
-
-                        long startRam = process.WorkingSet64;
-                        Console.WriteLine($"RAM at Start   : {FormatMemory(startRam)}");
-
-                        Console.WriteLine("\nMonitoring RAM usage...\n");
-
-                        // 3️⃣ Monitor until process exits
-                        while (!process.HasExited)
-                        {
-                            process.Refresh();
-                            Console.WriteLine(
-                                $"[{DateTime.Now:HH:mm:ss}] RAM Used : {FormatMemory(process.WorkingSet64)}"
-                            );
-                            Thread.Sleep(1000);
-                        }
-
-                        Console.WriteLine("\nProcess finished.");
-
-                        try
-                        {
-                            long endRam = process.WorkingSet64;
-                            Console.WriteLine($"RAM at End     : {FormatMemory(endRam)}");
-                        }
-                        catch
-                        {
-                            Console.WriteLine("Unable to read RAM after exit.");
-                        }
-
-                        Console.WriteLine("=====================================");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error monitoring process: {ex.Message}");
-                    }
-                });
-            }
-
-            private string FormatMemory(long bytes)
-            {
-                double kb = bytes / 1024.0;
-                double mb = kb / 1024.0;
-                return $"{mb:F2} MB";
-            }
-     
-    }
-    
-
 
     public class TimeCommand : ICommand
-     {
+    {
       public string Name => "time";
       public string Description => "Show current system time";
 
