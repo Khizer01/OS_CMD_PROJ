@@ -12,53 +12,94 @@ namespace OS_CMD_PROJECT.Commands
         // Constructor takes an AI client to send queries
         public AskAiCommand(IAIClient aiClient)
         {
-            _aiClient = aiClient;
+            _aiClient = aiClient ?? throw new ArgumentNullException(nameof(aiClient));
         }
 
         public string Name => "ask-ai"; // Command name
-        public string Description => "Ask the AI a question. Usage: ask-ai <your question>"; // Command description
-
+        public string Description => "Ask the AI a question or start a chat. Usage: ask-ai <question> | chat-ai";
 
         public async Task Execute(string[] args)
         {
-            // Ensure the user provides a question
+            // Ensure arguments are provided
             if (args == null || args.Length == 0)
             {
-                Console.WriteLine("Usage: ask-ai <question>");
+                Console.WriteLine("Usage: ask-ai <question> OR ask-ai chat-ai");
                 return;
             }
 
-            // Combine arguments into a single question
+            string firstArg = args[0].ToLower();
+
+            if (firstArg == "chat-ai")
+            {
+                await StartChatAsync();
+                return;
+            }
+
             var prompt = string.Join(" ", args);
             Console.WriteLine("Sending to AI...");
 
-            
-            // Get the AI's response
-            var response = await _aiClient.QueryAsync(prompt);
-            Console.WriteLine("AI response:\n" + response);
+            try
+            {
+                var response = await _aiClient.QueryAsync(prompt);
+                Console.WriteLine("AI response:\n" + response);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error querying AI: " + ex.Message);
+            }
+        }
+
+        private async Task StartChatAsync()
+        {
+            Console.WriteLine("Starting AI Chat session. Type 'exit' to end the conversation.");
+            Console.WriteLine("----------------------------------------");
+
+            string userInput;
+            do
+            {
+                Console.Write("You: ");
+                userInput = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(userInput) || userInput.ToLower() == "exit")
+                    break;
+
+                try
+                {
+                    string response = await _aiClient.QueryAsync(userInput);
+                    Console.WriteLine("\nAI: " + response);
+                    Console.WriteLine("----------------------------------------");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error communicating with AI: {ex.Message}");
+                }
+
+            } while (true);
+
+            Console.WriteLine("AI chat session ended.");
         }
     }
 }
 
 
-
+// AI Client
 public class AIClient : IAIClient
 {
     private readonly string _apiKey;
+
     public AIClient()
     {
-        _apiKey = Environment.GetEnvironmentVariable("AI_API_KEY");
+        _apiKey = Environment.GetEnvironmentVariable("AI_API_KEY") ?? "YOUR_API_KEY";
 
         if (string.IsNullOrWhiteSpace(_apiKey))
             throw new Exception("AI API Key not found.");
     }
 
+    // Single query
     public async Task<string> QueryAsync(string prompt)
     {
-        // Use _apiKey here in HTTP request
+        // Simulate API call (replace with actual API call)
+        await Task.Delay(200);
         return $"You asked: {prompt}";
     }
 }
-
-
-
