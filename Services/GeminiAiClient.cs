@@ -15,7 +15,7 @@ namespace OS_CMD_PROJECT.Services
         public GeminiClient()
         {
             _httpClient = new HttpClient();
-            _apiKey = "AIzaSyBwLQSyreOffRnEvzeeHghSu1wUUhHQZuQ";
+            _apiKey = "GEMINI_API_KEY";
 
             if (string.IsNullOrEmpty(_apiKey))
                 throw new Exception("GEMINI_API_KEY is not set");
