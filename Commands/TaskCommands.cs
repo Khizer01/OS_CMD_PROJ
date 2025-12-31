@@ -1,8 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Management;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,52 +14,47 @@ namespace OS_CMD_PROJECT.Commands
 
         public Task Execute(string[] args)
         {
-            Console.Clear();
-            Console.CursorVisible = false;
+            Console.WriteLine(" ID     Process Name               Memory (MB)   UI");
+            Console.WriteLine("-----------------------------------------------------");
 
-            while (true)
+            var processes = Process.GetProcesses();
+
+            foreach (var process in processes)
             {
-                if (Console.KeyAvailable)
+                try
                 {
-                    var key = Console.ReadKey(true);
-                    if (key.Key == ConsoleKey.Q || key.Key == ConsoleKey.Escape)
-                        break;
+                    string name = process.ProcessName;
+                    if (name.Length > 25)
+                        name = name.Substring(0, 22) + "...";
+
+                    double memoryMb = process.WorkingSet64 / (1024.0 * 1024.0);
+
+                    // UI / Windowed process check
+                    string uiStatus;
+
+                    if (process.MainWindowHandle == IntPtr.Zero)
+                    {
+                        uiStatus = "-";
+                    }
+                    else if (string.IsNullOrWhiteSpace(process.MainWindowTitle))
+                    {
+                        uiStatus = "System";
+                    }
+                    else
+                    {
+                        uiStatus = "User";
+                    }
+
+                    Console.WriteLine(
+                        $"{process.Id,-6} {name,-25} {memoryMb,10:F2}   {uiStatus}"
+                    );
                 }
-
-                Console.SetCursorPosition(0, 0);
-
-                Console.WriteLine(" ID     Process Name               Memory (MB)");
-                Console.WriteLine("-----------------------------------------------");
-
-                var processes = Process.GetProcesses();
-
-                foreach (var process in processes)
+                catch
                 {
-                    try
-                    {
-                        string name = process.ProcessName;
-
-                        if (name.Length > 25)
-                            name = name.Substring(0, 22) + "...";
-
-                        double memoryMb = process.WorkingSet64 / (1024.0 * 1024.0);
-
-                        Console.WriteLine(
-                            $"{process.Id,-6} {name,-25} {memoryMb,10:F2}"
-                        );
-                    }
-                    catch
-                    {
-                        // Ignore inaccessible system processes
-                    }
+                    // Ignore inaccessible system processes
                 }
-
-                Console.WriteLine("\nPress Q or ESC to exit...");
-                Thread.Sleep(3000);
             }
 
-            Console.CursorVisible = true;
-            Console.Clear();
             return Task.CompletedTask;
         }
     }
@@ -98,9 +92,60 @@ namespace OS_CMD_PROJECT.Commands
             return Task.CompletedTask;
         }
     }
-    
 
-   
+    public class OpenProcessCommand : ICommand
+    {
+        public string Name => "open";
+        public string Description => "Brings a process window to the foreground using PID";
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        private const int SW_RESTORE = 9;
+
+        public Task Execute(string[] args)
+        {
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Usage: open <pid>");
+                return Task.CompletedTask;
+            }
+
+            if (!int.TryParse(args[0], out int pid))
+            {
+                Console.WriteLine("Invalid PID.");
+                return Task.CompletedTask;
+            }
+
+            try
+            {
+                var process = Process.GetProcessById(pid);
+
+                if (process.MainWindowHandle == IntPtr.Zero ||
+                    string.IsNullOrWhiteSpace(process.MainWindowTitle))
+                {
+                    Console.WriteLine("This process cannot be opened (system or background process).");
+                    return Task.CompletedTask;
+                }
+
+                ShowWindow(process.MainWindowHandle, SW_RESTORE);
+
+                SetForegroundWindow(process.MainWindowHandle);
+
+                Console.WriteLine($"{process.ProcessName} opened successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to open process: {ex.Message}");
+            }
+
+            return Task.CompletedTask;
+        }
+    }
+
     public class GetCpuUsageCommand : ICommand
     {
         public string Name => "cpu-usage";
