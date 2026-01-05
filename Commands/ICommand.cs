@@ -35,25 +35,27 @@ namespace OS_CMD_PROJECT.Commands
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: create-file <file_name> ");
+                Console.WriteLine("Usage: create-file <file_name>");
                 return;
             }
 
             string filePath = args[0];
-            if (!File.Exists(filePath))
+            try
             {
-                File.Create(filePath).Close();
-
-                using (var fs = File.Create(filePath))
+                if (!File.Exists(filePath))
                 {
-                    await fs.FlushAsync(); // ensure async creation
+                    // Create an empty file
+                    await Task.Run(() => File.WriteAllText(filePath, string.Empty));
+                    Console.WriteLine($"File Created: {filePath}");
                 }
-
-                Console.WriteLine($"File Created: {filePath}");
+                else
+                {
+                    Console.WriteLine($"File Already Exists: {filePath}");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine($"File Already Exists: {filePath}");
+                Console.WriteLine($"Failed to create file: {ex.Message}");
             }
 
         }
@@ -75,16 +77,22 @@ namespace OS_CMD_PROJECT.Commands
 
             string filePath = args[0];
 
-            if (!File.Exists(filePath))
+            try
             {
-                Console.WriteLine($"{filePath} doesn't exsit");
-                return;
+                if (!File.Exists(filePath))
+                {
+                    Console.WriteLine($"{filePath} doesn't exist");
+                    return;
+                }
+                else
+                {
+                    await Task.Run(() => File.Delete(filePath));
+                    Console.WriteLine($"Deleted File: {filePath}");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                File.Delete(filePath);
-                await Task.Run(() => File.Delete(filePath));
-                Console.WriteLine($"Deleted File: {filePath}");
+                Console.WriteLine($"Failed to delete file: {ex.Message}");
             }
 
         }
@@ -99,23 +107,30 @@ namespace OS_CMD_PROJECT.Commands
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: delete-dir <file-name>");
+                Console.WriteLine("Usage: delete-dir <dir-path>");
                 return;
 
             }
 
             string dirPath = args[0];
 
-            if (!Directory.Exists(dirPath))
+            try
             {
-                Console.WriteLine($"{dirPath} does not exist");
-                return;
+                if (!Directory.Exists(dirPath))
+                {
+                    Console.WriteLine($"{dirPath} does not exist");
+                    return;
+                }
+                else
+                {
+                    // Delete directory recursively
+                    await Task.Run(() => Directory.Delete(dirPath, true));
+                    Console.WriteLine($"Deleted Directory: {dirPath}");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Directory.Delete(dirPath, false);
-                await Task.Run(() => File.Delete(dirPath));
-                Console.WriteLine($"Deleted Directory: {dirPath}");
+                Console.WriteLine($"Failed to delete directory: {ex.Message}");
             }
 
         }
