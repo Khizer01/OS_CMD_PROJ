@@ -16,7 +16,7 @@ namespace OS_CMD_PROJECT.Commands
         }
 
         public string Name => "ask-ai"; // Command name
-        public string Description => "Ask the AI a question or start a chat. Usage: ask-ai <question> | chat-ai";
+        public string Description => "Ask the AI a question or start a chat. Usage: ask-ai <question> | ask-ai chat-ai";
 
         public async Task Execute(string[] args)
         {
@@ -78,28 +78,5 @@ namespace OS_CMD_PROJECT.Commands
 
             Console.WriteLine("AI chat session ended.");
         }
-    }
-}
-
-
-// AI Client
-public class AIClient : IAIClient
-{
-    private readonly string _apiKey;
-
-    public AIClient()
-    {
-        _apiKey = Environment.GetEnvironmentVariable("AI_API_KEY") ?? "YOUR_API_KEY";
-
-        if (string.IsNullOrWhiteSpace(_apiKey))
-            throw new Exception("AI API Key not found.");
-    }
-
-    // Single query
-    public async Task<string> QueryAsync(string prompt)
-    {
-        // Simulate API call (replace with actual API call)
-        await Task.Delay(200);
-        return $"You asked: {prompt}";
     }
 }

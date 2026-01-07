@@ -48,9 +48,7 @@ namespace OS_CMD_PROJECT
             registry.Register(new FileInfoCommand()); // Command to show detailed file information
             registry.Register(new DirectoryInfoCommand()); // Command to show detailed directory information
             registry.Register(new MonitorProcessCommand());//command to monitor process memory continously
-
-
-
+            registry.Register(new ExitCommand()); // Command to exit the CLI
 
             // Display a welcome message
             Console.WriteLine("Welcome to OS CLI\nType 'help' to see available commands. Type 'exit' to quit.");
@@ -128,15 +126,22 @@ namespace OS_CMD_PROJECT
         {
             Console.WriteLine("Command not found.");
 
-            var localSuggestions = registry.GetAll()
-                .Where(c => LevenshteinDistance(c.Name, commandName) <= 2)
-                .Select(c => c.Name)
+            var suggestions = registry.GetAll()
+                .Select(c => new
+                {
+                    Command = c,
+                    Score = CalculateSimilarityScore(commandName, c.Name)
+                })
+                .Where(x => x.Score > 0)
+                .OrderByDescending(x => x.Score)
+                .Take(3)
+                .Select(x => x.Command.Name)
                 .ToList();
 
-            if (localSuggestions.Any())
+            if (suggestions.Any())
             {
                 Console.WriteLine("Did you mean:");
-                foreach (var suggestion in localSuggestions)
+                foreach (var suggestion in suggestions)
                     Console.WriteLine($" - {suggestion}");
             }
             else
@@ -197,6 +202,91 @@ namespace OS_CMD_PROJECT
             }
             return d[s.Length, t.Length];
         }
+
+        public static int CalculateSimilarityScore(string input, string command)
+        {
+            input = input.ToLower();
+            command = command.ToLower();
+            int score = 0;
+
+            if (command == input) return 1000;
+            
+            if (command.StartsWith(input))
+            {
+                score += 100;
+                int lengthRatio = (input.Length * 100) / command.Length;
+                score += lengthRatio;
+            }
+            
+            var inputTokens = input.Split(new[] { '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+            var commandTokens = command.Split(new[] { '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+
+            int tokenMatchScore = 0;
+            bool hasTokenStartMatch = false;
+            int matchingTokenCount = 0;
+            
+            foreach (var inputToken in inputTokens)
+            {
+                if (inputToken.Length < 2) continue;
+                
+                bool foundMatch = false;
+                foreach (var cmdToken in commandTokens)
+                {
+                    if (cmdToken == inputToken)
+                    {
+                        tokenMatchScore += 50;
+                        hasTokenStartMatch = true;
+                        foundMatch = true;
+                        break;
+                    }
+                    else if (cmdToken.StartsWith(inputToken))
+                    {
+                        int ratio = (inputToken.Length * 100) / cmdToken.Length;
+                        tokenMatchScore += Math.Min(40, ratio / 2);
+                        hasTokenStartMatch = true;
+                        foundMatch = true;
+                        break;
+                    }
+                    else if (cmdToken.Contains(inputToken) && inputToken.Length >= 3)
+                    {
+                        tokenMatchScore += 10;
+                        foundMatch = true;
+                    }
+                }
+                if (foundMatch) matchingTokenCount++;
+            }
+            score += tokenMatchScore;
+
+            if (hasTokenStartMatch && commandTokens.Length > 1)
+            {
+                int preferShorterCommandBonus = (3 - Math.Min(2, commandTokens.Length - 1)) * 5;
+                score += preferShorterCommandBonus;
+            }
+
+            if (command.Contains(input) && !command.StartsWith(input) && !hasTokenStartMatch)
+            {
+                int position = command.IndexOf(input);
+                int positionPenalty = position * 2;
+                score += Math.Max(5, 30 - positionPenalty);
+            }
+
+            int distance = LevenshteinDistance(input, command);
+            if (distance <= 2 && input.Length >= 3)
+            {
+                int distanceScore = (3 - distance) * 15;
+                int lengthPenalty = Math.Abs(input.Length - command.Length) * 2;
+                score += Math.Max(0, distanceScore - lengthPenalty);
+            }
+            else if (distance == 1 && input.Length >= 2)
+            {
+                int distanceScore = 20;
+                int lengthPenalty = Math.Abs(input.Length - command.Length) * 3;
+                score += Math.Max(0, distanceScore - lengthPenalty);
+            }
+
+            return score;
+        }
     }
 }
+
 
