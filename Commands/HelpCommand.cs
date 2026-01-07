@@ -28,7 +28,6 @@ namespace OS_CMD_PROJECT.Commands
                 Console.WriteLine($"  {cmd.Name} - {cmd.Description}");
             }
 
-            Console.WriteLine("  exit - Exit the CLI"); // Add exit command explicitly
             return Task.CompletedTask;
         }
     }
