@@ -1,10 +1,7 @@
 using System;
 using System.Diagnostics;
-using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Input;
 
 namespace OS_CMD_PROJECT.Commands
 {
@@ -776,6 +773,20 @@ namespace OS_CMD_PROJECT.Commands
         }
     }
 
+
+    public class ExitCommand : ICommand
+    {
+        public string Name => "exit";
+        public string Description => "Exit the CLI";
+
+        public Task Execute(string[] args)
+        {
+            Console.WriteLine("Goodbye!");
+            Environment.Exit(0);
+            return Task.CompletedTask;
+        }
+    }
+ 
 }
 
 
