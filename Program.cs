@@ -47,7 +47,8 @@ namespace OS_CMD_PROJECT
             registry.Register(new DirectoryInfoCommand()); // Command to show detailed directory information
             registry.Register(new MonitorProcessCommand());//command to monitor process memory continously
 
-
+            registry.Register(new UndoCommand());
+            registry.Register(new RedoCommand());
 
 
             // Display a welcome message
