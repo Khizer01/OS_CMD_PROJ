@@ -49,7 +49,8 @@ namespace OS_CMD_PROJECT
             registry.Register(new DirectoryInfoCommand()); // Command to show detailed directory information
             registry.Register(new MonitorProcessCommand());//command to monitor process memory continously
             registry.Register(new ExitCommand()); // Command to exit the CLI
-
+            registry.Register(new UndoCommand()); // Command to undo the last action
+            registry.Register(new RedoCommand()); // Command to redo the last undone action
             // Display a welcome message
             Console.WriteLine("Welcome to OS CLI\nType 'help' to see available commands. Type 'exit' to quit.");
 
